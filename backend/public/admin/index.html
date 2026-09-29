@@ -44,7 +44,8 @@
 
         <button class="nav-item" data-tab="activities">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-          <span>Activities Ledger</span>
+          <span>Activities & Audits</span>
+          <span class="nav-counter alert hidden" id="badge-anomalies-count">0</span>
         </button>
 
         <button class="nav-item" data-tab="support">
@@ -102,9 +103,27 @@
       <section class="tab-pane active" id="pane-overview">
         <!-- KPI METRICS GRID -->
         <div class="kpi-grid">
+          <!-- PAYSTACK COMPANY MASTER WALLET POOL -->
+          <div class="kpi-card gold-featured">
+            <div class="kpi-header">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="kpi-label">COMPANY MASTER WALLET (PAYSTACK)</span>
+                <span class="badge-mini live-pill"><span class="pulse-dot"></span> LIVE POOL</span>
+              </div>
+              <span class="kpi-icon gold-bg">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </span>
+            </div>
+            <div class="kpi-value highlight-gold" id="kpi-company-pool">KSh 0.00</div>
+            <div class="kpi-footer">
+              <span class="tag-pill" id="kpi-treasury-health-badge">CHECKING RESERVE...</span>
+              <div class="sub-stat mt-1" id="kpi-company-pool-sub">Primary liquidity reserve (inflows & outflows)</div>
+            </div>
+          </div>
+
           <div class="kpi-card mint">
             <div class="kpi-header">
-              <span class="kpi-label">TOTAL PLATFORM LIQUIDITY</span>
+              <span class="kpi-label">MEMBER WALLET LIABILITIES</span>
               <span class="kpi-icon mint-bg">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
               </span>
@@ -162,6 +181,11 @@
             <p>Direct underwriting desk shortcuts: approve pending loans, manage welcome rewards, and answer real-time member inquiries.</p>
           </div>
           <div class="banner-buttons">
+            <button class="btn btn-warning" id="btn-quick-audit" onclick="runTreasuryAudit()">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              <span>Audit Treasury Pool</span>
+              <span class="badge-mini alert hidden" id="overview-anomalies-pill">0</span>
+            </button>
             <button class="btn btn-primary" onclick="switchTab('loans')">
               <span>Go to Loan Desk</span>
               <span class="badge-mini" id="overview-pending-pill">0</span>
@@ -328,52 +352,163 @@
         </div>
       </section>
 
-      <!-- TAB 4: ACTIVITIES LEDGER -->
+      <!-- TAB 4: ACTIVITIES & AUDIT LEDGER -->
       <section class="tab-pane" id="pane-activities">
-        <div class="toolbar">
-          <div class="search-box">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" id="ledger-search-input" placeholder="Search reference, description, member name...">
+        <!-- TREASURY RECONCILIATION AUDIT CARD -->
+        <div class="treasury-audit-card">
+          <div class="tac-header">
+            <div class="tac-info">
+              <div class="tac-badge-row">
+                <span class="tac-badge live"><span class="pulse-dot"></span> LIVE PAYSTACK LIQUIDITY POOL</span>
+                <span class="tac-badge status" id="audit-health-pill">CHECKING RESERVE...</span>
+              </div>
+              <h3>Company Master Reserve Reconciliation</h3>
+              <p>Real-time automated 3-way balance audit comparing Paystack master liquidity reserve against circulating customer liabilities and settled net transaction flows.</p>
+            </div>
+            <div class="tac-actions">
+              <button class="btn btn-primary" id="btn-trigger-reconciliation" onclick="runTreasuryAudit()">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                <span>⚡ Run Live Reconciliation Audit</span>
+              </button>
+            </div>
           </div>
-          <div class="select-wrapper">
-            <select id="ledger-type-filter" class="custom-select">
-              <option value="ALL">All Transaction Types</option>
-              <option value="DEPOSIT">Deposits & Welcome Bonus</option>
-              <option value="WITHDRAWAL">Withdrawals (Bank / M-PESA)</option>
-              <option value="TRANSFER">P2P Transfers</option>
-              <option value="LOAN_DISBURSEMENT">Loan Disbursements</option>
-              <option value="LOAN_REPAYMENT">Loan Repayments</option>
-              <option value="INVESTMENT">Investment Subscriptions</option>
-            </select>
+
+          <div class="tac-metrics-grid">
+            <div class="tac-metric-box">
+              <div class="tac-lbl">PAYSTACK MASTER POOL</div>
+              <div class="tac-val highlight-gold" id="audit-gateway-balance">KSh 0.00</div>
+              <div class="tac-sub" id="audit-gateway-usd">USD: $0.00</div>
+            </div>
+
+            <div class="tac-metric-box">
+              <div class="tac-lbl">MEMBER LIABILITIES</div>
+              <div class="tac-val" id="audit-member-liabilities">KSh 0.00</div>
+              <div class="tac-sub">Total active user balances</div>
+            </div>
+
+            <div class="tac-metric-box">
+              <div class="tac-lbl">NET RECORDED SETTLEMENT</div>
+              <div class="tac-val" id="audit-settled-flow">KSh 0.00</div>
+              <div class="tac-sub">Deposits minus withdrawals</div>
+            </div>
+
+            <div class="tac-metric-box">
+              <div class="tac-lbl">COVERAGE VARIANCE / DELTA</div>
+              <div class="tac-val" id="audit-reserve-delta">KSh 0.00</div>
+              <div class="tac-sub" id="audit-delta-sub">Live reserve vs liabilities</div>
+            </div>
           </div>
         </div>
 
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-              <h4>Global Financial Audit Ledger (<span id="ledger-count-display">0</span> entries)</h4>
+        <!-- ACTIVITIES SUB-TAB SWITCHER -->
+        <div class="sub-tab-bar">
+          <button class="sub-tab-btn active" id="btn-subtab-ledger" onclick="switchActivitiesSubTab('ledger')">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            <span>Transaction Ledger</span>
+            <span class="nav-counter" id="ledger-count-display">0</span>
+          </button>
+          <button class="sub-tab-btn" id="btn-subtab-auditlogs" onclick="switchActivitiesSubTab('audit_logs')">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <span>System Audit & Anomaly Logs</span>
+            <span class="nav-counter alert" id="audit-logs-count-display">0</span>
+          </button>
+        </div>
+
+        <!-- SUBTAB VIEW 1: TRANSACTION LEDGER -->
+        <div id="view-activities-ledger">
+          <div class="toolbar">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" id="ledger-search-input" placeholder="Search reference, description, member name...">
             </div>
-            <span class="info-badge">Immutable Central Transaction Log</span>
+            <div class="select-wrapper">
+              <select id="ledger-type-filter" class="custom-select">
+                <option value="ALL">All Transaction Types</option>
+                <option value="DEPOSIT">Deposits & Welcome Bonus</option>
+                <option value="WITHDRAWAL">Withdrawals (Bank / M-PESA)</option>
+                <option value="TRANSFER">P2P Transfers</option>
+                <option value="LOAN_DISBURSEMENT">Loan Disbursements</option>
+                <option value="LOAN_REPAYMENT">Loan Repayments</option>
+                <option value="INVESTMENT">Investment Subscriptions</option>
+              </select>
+            </div>
           </div>
-          <div class="table-container">
-            <table class="data-table" id="table-ledger">
-              <thead>
-                <tr>
-                  <th>Timestamp</th>
-                  <th>Reference</th>
-                  <th>Member</th>
-                  <th>Type</th>
-                  <th>Description</th>
-                  <th>Amount</th>
-                  <th>Channel</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="ledger-table-body">
-                <tr><td colspan="8" class="table-loading">Loading transaction ledger...</td></tr>
-              </tbody>
-            </table>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                <h4>Customer Financial Transactions</h4>
+              </div>
+              <span class="info-badge">Immutable Central Ledger</span>
+            </div>
+            <div class="table-container">
+              <table class="data-table" id="table-ledger">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Reference</th>
+                    <th>Member</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Channel</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="ledger-table-body">
+                  <tr><td colspan="8" class="table-loading">Loading transaction ledger...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUBTAB VIEW 2: SYSTEM AUDIT & ANOMALY LOGS -->
+        <div id="view-activities-auditlogs" class="hidden">
+          <div class="toolbar">
+            <div class="filter-group">
+              <button class="filter-chip active" data-audit-sev="ALL">All Severities</button>
+              <button class="filter-chip" data-audit-sev="CRITICAL">Critical Deficits <span class="badge-dot-rose"></span></button>
+              <button class="filter-chip" data-audit-sev="WARNING">Warnings</button>
+              <button class="filter-chip" data-audit-sev="INFO">Reconciliation Syncs</button>
+            </div>
+            <div class="select-wrapper">
+              <select id="audit-type-filter" class="custom-select">
+                <option value="ALL">All Event Types</option>
+                <option value="TREASURY_ANOMALY">Treasury Anomalies & Deficits</option>
+                <option value="TREASURY_SYNC">Treasury Pool Syncs</option>
+                <option value="SECURITY_ALERT">Security & Intrusion Alerts</option>
+                <option value="ADMIN_ACTION">Admin Configuration Audits</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <h4>Treasury Anomaly & System Audit Ledger</h4>
+              </div>
+              <span class="info-badge">PostgreSQL Immutable Audit Trail</span>
+            </div>
+            <div class="table-container">
+              <table class="data-table" id="table-audit-logs">
+                <thead>
+                  <tr>
+                    <th>Audit Timestamp</th>
+                    <th>Severity</th>
+                    <th>Event Type</th>
+                    <th>Audit Title</th>
+                    <th>Diagnostic Finding / Details</th>
+                    <th>Inspection</th>
+                  </tr>
+                </thead>
+                <tbody id="audit-logs-table-body">
+                  <tr><td colspan="6" class="table-loading">Loading system audit records...</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
@@ -578,6 +713,35 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeRejectModal()">Cancel</button>
         <button class="btn btn-danger" id="btn-confirm-reject" onclick="confirmRejectLoan()">Confirm Rejection</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUDIT METADATA INSPECTOR MODAL -->
+  <div class="modal-backdrop hidden" id="modal-audit-detail">
+    <div class="modal-box modal-lg">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="badge-status" id="modal-audit-severity">INFO</span>
+          <h4 id="modal-audit-title">Audit Diagnostic Record</h4>
+        </div>
+        <button class="modal-close" onclick="closeAuditModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="audit-summary-box mb-3">
+          <div class="lbl">FINDINGS & DESCRIPTION:</div>
+          <div class="val" id="modal-audit-description">-</div>
+          <div class="audit-meta-row mt-2">
+            <span><strong>Timestamp:</strong> <span id="modal-audit-time" class="font-mono"></span></span> • 
+            <span><strong>Event Type:</strong> <span id="modal-audit-event" class="font-mono"></span></span> • 
+            <span><strong>Log ID:</strong> <span id="modal-audit-id" class="font-mono"></span></span>
+          </div>
+        </div>
+        <label>PAYLOAD & RECONCILIATION METADATA (JSON)</label>
+        <pre class="json-code-box" id="modal-audit-json"></pre>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAuditModal()">Close Inspector</button>
       </div>
     </div>
   </div>

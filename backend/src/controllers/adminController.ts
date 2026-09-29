@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { dbRepo } from '../database/repository';
 import { getFallbackStore, saveFallbackDb } from '../database/db';
+import { paystackService } from '../services/paystack';
 
 export const adminController = {
   // 1. OVERVIEW & METRICS
@@ -33,6 +34,34 @@ export const adminController = {
 
       const openTickets = tickets.filter((t) => t.status === 'OPEN').length;
 
+      // 1b. Query Live Paystack Master Wallet Reserve
+      let paystackBalances: { currency: string; balance: number }[] = [];
+      try {
+        paystackBalances = await paystackService.getCompanyBalance();
+      } catch (err: any) {
+        console.warn('Paystack live balance query warning in getOverview:', err.message);
+        paystackBalances = [{ currency: 'KES', balance: 0.00 }];
+      }
+
+      const kesBalanceObj = paystackBalances.find((b) => b.currency === 'KES');
+      const companyPoolBalance = kesBalanceObj ? kesBalanceObj.balance : 0.00;
+      const usdBalanceObj = paystackBalances.find((b) => b.currency === 'USD');
+      const companyPoolUsd = usdBalanceObj ? usdBalanceObj.balance : 0.00;
+
+      // Treasury Anomaly Analysis
+      const treasuryDiscrepancy = Number((companyPoolBalance - totalLiquidity).toFixed(2));
+      let treasuryHealth: 'HEALTHY' | 'DEFICIT_ANOMALY' | 'SURPLUS' = 'HEALTHY';
+      if (treasuryDiscrepancy < 0) {
+        treasuryHealth = 'DEFICIT_ANOMALY';
+      } else if (treasuryDiscrepancy > 0) {
+        treasuryHealth = 'SURPLUS';
+      }
+
+      const recentAuditLogs = await dbRepo.getAuditLogs(20);
+      const activeAnomaliesCount = recentAuditLogs.filter(
+        (l) => l.severity === 'WARNING' || l.severity === 'CRITICAL'
+      ).length;
+
       return res.json({
         success: true,
         data: {
@@ -43,6 +72,12 @@ export const adminController = {
             suspended_users: suspendedUsers,
             frozen_wallets: frozenWallets,
             total_liquidity: totalLiquidity,
+            company_pool_balance: companyPoolBalance,
+            company_pool_currency: 'KES',
+            company_pool_usd: companyPoolUsd,
+            treasury_health: treasuryHealth,
+            treasury_discrepancy: treasuryDiscrepancy,
+            anomalies_count: activeAnomaliesCount,
             pending_loans_count: pendingLoans.length,
             pending_loans_amount: pendingLoansAmount,
             active_loans_count: activeLoans.length,
@@ -56,6 +91,7 @@ export const adminController = {
           },
           system_settings: settings,
           recent_transactions: transactions.slice(0, 10),
+          recent_audit_logs: recentAuditLogs.slice(0, 5),
           pending_loans: pendingLoans.slice(0, 5),
           recent_tickets: tickets.slice(0, 5),
         },
@@ -284,6 +320,114 @@ export const adminController = {
     } catch (error: any) {
       console.error('admin getActivities error:', error);
       return res.status(500).json({ success: false, message: error.message || 'Failed to fetch activities' });
+    }
+  },
+
+  // 4b. TREASURY RECONCILIATION & ANOMALY AUDIT
+  async getTreasuryAudit(req: Request, res: Response) {
+    try {
+      const users = await dbRepo.getAllUsers();
+      const allTx = await dbRepo.getAllTransactions(5000);
+      const paystackBalances = await paystackService.getCompanyBalance();
+      const kesBalanceObj = paystackBalances.find((b) => b.currency === 'KES');
+      const gatewayBalance = kesBalanceObj ? kesBalanceObj.balance : 0.00;
+
+      const totalUserLiabilities = users.reduce((acc, u) => acc + (Number(u.balance) || 0), 0);
+
+      // Settled transactions
+      const settledDeposits = allTx
+        .filter((t) => t.type === 'DEPOSIT' && t.status === 'SUCCESS' && t.channel !== 'PROMOTIONAL')
+        .reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+      const settledWithdrawals = allTx
+        .filter((t) => t.type === 'WITHDRAWAL' && t.status === 'SUCCESS')
+        .reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+      const netRecordedGatewayFlow = Number((settledDeposits - settledWithdrawals).toFixed(2));
+
+      const promotionalCredits = allTx
+        .filter((t) => t.channel === 'PROMOTIONAL' && t.status === 'SUCCESS')
+        .reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+
+      const deltaVsLiabilities = Number((gatewayBalance - totalUserLiabilities).toFixed(2));
+      const deltaVsNetFlow = Number((gatewayBalance - netRecordedGatewayFlow).toFixed(2));
+
+      const anomalies: string[] = [];
+      let severity: 'INFO' | 'WARNING' | 'CRITICAL' = 'INFO';
+
+      if (deltaVsLiabilities < 0) {
+        anomalies.push(
+          `LIQUIDITY DEFICIT: Paystack master pool (KSh ${gatewayBalance.toLocaleString()}) is below total circulating member liabilities (KSh ${totalUserLiabilities.toLocaleString()}). Shortfall: KSh ${Math.abs(deltaVsLiabilities).toLocaleString()}`
+        );
+        severity = 'CRITICAL';
+      }
+
+      if (Math.abs(deltaVsNetFlow) > 10.0 && netRecordedGatewayFlow > 0) {
+        anomalies.push(
+          `GATEWAY SETTLEMENT DRIFT: Live gateway balance differs from recorded settled net flow by KSh ${deltaVsNetFlow.toLocaleString()}`
+        );
+        if (severity !== 'CRITICAL') severity = 'WARNING';
+      }
+
+      // Record Audit Event in PostgreSQL database
+      const auditLog = await dbRepo.createAuditLog({
+        event_type: anomalies.length > 0 ? 'TREASURY_ANOMALY' : 'TREASURY_SYNC',
+        severity,
+        title: anomalies.length > 0 ? `Treasury Anomaly Detected (${anomalies.length} issue(s))` : 'Treasury Master Pool Reconciled',
+        description:
+          anomalies.length > 0
+            ? anomalies.join(' | ')
+            : `Live Paystack master pool verified at KSh ${gatewayBalance.toLocaleString()}. Coverage ratio healthy.`,
+        metadata: {
+          gateway_balance: gatewayBalance,
+          total_user_liabilities: totalUserLiabilities,
+          settled_deposits: settledDeposits,
+          settled_withdrawals: settledWithdrawals,
+          net_recorded_gateway_flow: netRecordedGatewayFlow,
+          promotional_credits: promotionalCredits,
+          delta_vs_liabilities: deltaVsLiabilities,
+          anomalies,
+        },
+      });
+
+      return res.json({
+        success: true,
+        data: {
+          gateway_balance: gatewayBalance,
+          gateway_currency: 'KES',
+          total_user_liabilities: totalUserLiabilities,
+          settled_deposits: settledDeposits,
+          settled_withdrawals: settledWithdrawals,
+          net_recorded_gateway_flow: netRecordedGatewayFlow,
+          promotional_credits: promotionalCredits,
+          delta_vs_liabilities: deltaVsLiabilities,
+          delta_vs_net_flow: deltaVsNetFlow,
+          health_status: severity === 'INFO' ? 'HEALTHY' : severity === 'WARNING' ? 'WARNING' : 'CRITICAL_DEFICIT',
+          anomalies,
+          audit_log: auditLog,
+        },
+      });
+    } catch (error: any) {
+      console.error('admin getTreasuryAudit error:', error);
+      return res.status(500).json({ success: false, message: error.message || 'Failed to complete treasury audit' });
+    }
+  },
+
+  // 4c. AUDIT LOGS QUERY
+  async getAuditLogs(req: Request, res: Response) {
+    try {
+      const { severity, event_type, limit = '100' } = req.query;
+      const lim = Math.min(parseInt(limit as string, 10) || 100, 500);
+      const sev = severity && severity !== 'ALL' ? (severity as string) : undefined;
+      const evType = event_type && event_type !== 'ALL' ? (event_type as string) : undefined;
+
+      const logs = await dbRepo.getAuditLogs(lim, sev, evType);
+      return res.json({
+        success: true,
+        count: logs.length,
+        data: logs,
+      });
+    } catch (error: any) {
+      console.error('admin getAuditLogs error:', error);
+      return res.status(500).json({ success: false, message: error.message || 'Failed to fetch audit logs' });
     }
   },
 

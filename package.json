@@ -9,5 +9,15 @@
     "build:backend": "cd backend && npm run build",
     "admin": "start http://localhost:5000/admin"
   },
-  "keywords": ["fintech", "paystack", "react-native", "expo-go", "nodejs", "postgresql"]
+  "keywords": [
+    "fintech",
+    "paystack",
+    "react-native",
+    "expo-go",
+    "nodejs",
+    "postgresql"
+  ],
+  "dependencies": {
+    "expo-document-picker": "^57.0.3"
+  }
 }

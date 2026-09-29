@@ -3,6 +3,13 @@
 CREATE TABLE IF NOT EXISTS users (
     id VARCHAR(64) PRIMARY KEY,
     full_name VARCHAR(255) NOT NULL,
+    national_id VARCHAR(8) UNIQUE,
+    date_of_birth DATE,
+    auto_lock_minutes INT DEFAULT 1,
+    two_factor_enabled BOOLEAN DEFAULT FALSE,
+    two_factor_secret VARCHAR(255),
+    referral_code VARCHAR(32) UNIQUE,
+    referred_by VARCHAR(64),
     email VARCHAR(255) UNIQUE NOT NULL,
     phone VARCHAR(32) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,

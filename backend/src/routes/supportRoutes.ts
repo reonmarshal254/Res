@@ -1,6 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { authenticate } from '../middleware/auth';
 import { dbRepo } from '../database/repository';
+import multer from 'multer';
+import path from 'path';
+
+const upload = multer({ dest: path.resolve(__dirname, '../../public/uploads/support'), limits: { fileSize: 10 * 1024 * 1024 } });
 
 const router = Router();
 
@@ -70,6 +74,18 @@ router.post('/tickets/:id/reply', authenticate, async (req: Request, res: Respon
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
   }
+});
+
+router.post('/tickets/:id/attachment', authenticate, upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user; const ticket = await dbRepo.getSupportTicketById(req.params.id);
+    if (!ticket || ticket.user_id !== user.id) return res.status(404).json({ success: false, message: 'Ticket not found' });
+    if (!req.file) return res.status(400).json({ success: false, message: 'Choose a file to upload' });
+    const safeName = req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const text = `📎 Attachment: ${safeName} (${Math.ceil(req.file.size / 1024)} KB) — /uploads/support/${req.file.filename}`;
+    const updated = await dbRepo.addSupportReply(req.params.id, 'USER', user.full_name || 'Member', text);
+    return res.json({ success: true, data: updated });
+  } catch (error: any) { return res.status(500).json({ success: false, message: error.message }); }
 });
 
 export default router;

@@ -18,22 +18,24 @@ export const loanController = {
       const activeLoan = existingLoans.find((l) => l.status === 'ACTIVE');
       const hasActiveLoan = !!activeLoan;
 
-      // Base credit limit determined by tier + activity
-      let maxLoanAmount = 250000;
-      if (user?.tier && user.tier >= 2) maxLoanAmount = 500000;
-      if (wallet && wallet.balance > 50000) maxLoanAmount += 150000;
+      // Eligibility requires a valid National ID and Kenyan phone number on the member profile.
+      const validNationalId = /^\d{7,8}$/.test(user?.national_id || '');
+      const normalizedPhone = (user?.phone || '').replace(/\D/g, '');
+      const validPhone = /^(?:254|0)7\d{8}$/.test(normalizedPhone);
+      const identityEligible = validNationalId && validPhone;
+      const maxLoanAmount = identityEligible ? 1500 : 0;
 
       return res.json({
         success: true,
         data: {
-          eligible: !hasActiveLoan,
+          eligible: identityEligible && !hasActiveLoan,
           max_amount: maxLoanAmount,
-          min_amount: 5000,
+          min_amount: identityEligible ? 100 : 0,
           monthly_interest_rate: 3.5, // 3.5% monthly flat
           available_tenures_months: [1, 3, 6, 12],
           active_loan: activeLoan || null,
-          credit_score: 720,
-          credit_tier: 'Prime Tier 1',
+          credit_score: identityEligible ? 650 : 0,
+          credit_tier: identityEligible ? 'ID & Phone Verified' : 'Identity details required',
         },
       });
     } catch (error: any) {
@@ -57,13 +59,20 @@ export const loanController = {
       const loanAmount = parseFloat(amount);
       const tenure = parseInt(tenure_months, 10);
 
-      if (isNaN(loanAmount) || loanAmount < 5000) {
-        return res.status(400).json({ success: false, message: 'Minimum loan amount is KSh 5,000 / $40' });
+      if (isNaN(loanAmount) || loanAmount < 100 || loanAmount > 1500) {
+        return res.status(400).json({ success: false, message: 'Loan amounts must be between KSh 100 and KSh 1,500' });
       }
 
       // Check PIN
       const user = await dbRepo.findUserById(userId);
       if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+      const validNationalId = /^\d{7,8}$/.test(user.national_id || '');
+      const normalizedPhone = user.phone.replace(/\D/g, '');
+      const validPhone = /^(?:254|0)7\d{8}$/.test(normalizedPhone);
+      if (!validNationalId || !validPhone) {
+        return res.status(403).json({ success: false, message: 'A valid National ID and Kenyan phone number are required for loan eligibility' });
+      }
 
       const isPinValid = await bcrypt.compare(pin, user.transaction_pin);
       if (!isPinValid) {

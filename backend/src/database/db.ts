@@ -218,6 +218,13 @@ export async function initDatabase() {
       // Auto-migrate columns on existing tables & seed global settings
       await client.query(`
         ALTER TABLE users ADD COLUMN IF NOT EXISTS is_suspended BOOLEAN DEFAULT FALSE;
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS national_id VARCHAR(8) UNIQUE;
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS date_of_birth DATE;
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS auto_lock_minutes INT DEFAULT 1;
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_enabled BOOLEAN DEFAULT FALSE;
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_secret VARCHAR(255);
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_code VARCHAR(32) UNIQUE;
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_by VARCHAR(64);
         ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
         ALTER TABLE wallets ADD COLUMN IF NOT EXISTS is_frozen BOOLEAN DEFAULT FALSE;
         ALTER TABLE wallets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
@@ -254,6 +261,16 @@ export async function initDatabase() {
       }
       console.log('✅ [Database] Seeded default investment plans into PostgreSQL.');
     }
+
+    // Savings uses the established growth-account ledger; this row satisfies its plan foreign key.
+    await client.query(
+      `INSERT INTO investment_plans (id, name, category, annual_percentage_yield, duration_days, min_amount, max_amount, risk_level, description, is_active)
+       VALUES ('resi_savings_16', 'Resi Growth Savings', 'Flexible Savings', 16.00, 365, 100.00, 5000000.00, 'LOW', 'A secure savings account earning 16% per annum, calculated daily and paid at maturity.', TRUE)
+       ON CONFLICT (id) DO UPDATE SET
+         name = EXCLUDED.name, category = EXCLUDED.category, annual_percentage_yield = EXCLUDED.annual_percentage_yield,
+         duration_days = EXCLUDED.duration_days, min_amount = EXCLUDED.min_amount, max_amount = EXCLUDED.max_amount,
+         risk_level = EXCLUDED.risk_level, description = EXCLUDED.description, is_active = TRUE`
+    );
 
     client.release();
   } catch (error: any) {

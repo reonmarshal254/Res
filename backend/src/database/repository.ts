@@ -12,6 +12,14 @@ export const dbRepo = {
     return store.users.find((u) => u.email.toLowerCase() === email.toLowerCase()) || null;
   },
 
+  async findUserByReferralCode(code: string): Promise<User | null> {
+    if (isDbPostgres() && pool) {
+      const res = await pool.query('SELECT * FROM users WHERE UPPER(referral_code) = UPPER($1)', [code]);
+      return res.rows[0] || null;
+    }
+    return getFallbackStore().users.find((u) => u.referral_code?.toUpperCase() === code.toUpperCase()) || null;
+  },
+
   async findUserById(id: string): Promise<User | null> {
     if (isDbPostgres() && pool) {
       const res = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
@@ -24,19 +32,23 @@ export const dbRepo = {
   async createUser(user: User): Promise<User> {
     if (isDbPostgres() && pool) {
       const query = `
-        INSERT INTO users (id, full_name, email, phone, password_hash, transaction_pin, tier, is_verified, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        INSERT INTO users (id, full_name, national_id, date_of_birth, email, phone, password_hash, transaction_pin, tier, is_verified, referral_code, referred_by, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING *
       `;
       const res = await pool.query(query, [
         user.id,
         user.full_name,
+        user.national_id || null,
+        user.date_of_birth || null,
         user.email,
         user.phone,
         user.password_hash,
         user.transaction_pin,
         user.tier,
         user.is_verified,
+        user.referral_code || null,
+        user.referred_by || null,
         user.created_at,
         user.updated_at,
       ]);
@@ -60,6 +72,62 @@ export const dbRepo = {
       user.updated_at = new Date().toISOString();
       saveFallbackDb();
     }
+  },
+
+  async completeUserVerification(userId: string, nationalId: string, dateOfBirth: string): Promise<User | null> {
+    if (isDbPostgres() && pool) {
+      const res = await pool.query(
+        `UPDATE users
+         SET national_id = $1, date_of_birth = $2, is_verified = TRUE, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $3
+         RETURNING *`,
+        [nationalId, dateOfBirth, userId]
+      );
+      return res.rows[0] || null;
+    }
+    const user = getFallbackStore().users.find((u) => u.id === userId);
+    if (!user) return null;
+    user.national_id = nationalId;
+    user.date_of_birth = dateOfBirth;
+    user.is_verified = true;
+    user.updated_at = new Date().toISOString();
+    saveFallbackDb();
+    return user;
+  },
+
+  async updateUserSecuritySettings(userId: string, autoLockMinutes: number, twoFactorEnabled: boolean): Promise<User | null> {
+    if (isDbPostgres() && pool) {
+      const res = await pool.query(
+        `UPDATE users SET auto_lock_minutes = $1, two_factor_enabled = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3 RETURNING *`,
+        [autoLockMinutes, twoFactorEnabled, userId]
+      );
+      return res.rows[0] || null;
+    }
+    const user = getFallbackStore().users.find((u) => u.id === userId);
+    if (!user) return null;
+    user.auto_lock_minutes = autoLockMinutes;
+    user.two_factor_enabled = twoFactorEnabled;
+    user.updated_at = new Date().toISOString();
+    saveFallbackDb();
+    return user;
+  },
+
+  async updateUserPassword(userId: string, passwordHash: string): Promise<void> {
+    if (isDbPostgres() && pool) {
+      await pool.query('UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [passwordHash, userId]);
+      return;
+    }
+    const user = getFallbackStore().users.find((u) => u.id === userId);
+    if (user) { user.password_hash = passwordHash; user.updated_at = new Date().toISOString(); saveFallbackDb(); }
+  },
+
+  async setTwoFactorSecret(userId: string, secret: string, enabled: boolean): Promise<void> {
+    if (isDbPostgres() && pool) {
+      await pool.query('UPDATE users SET two_factor_secret = $1, two_factor_enabled = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3', [secret, enabled, userId]);
+      return;
+    }
+    const user = getFallbackStore().users.find((u) => u.id === userId);
+    if (user) { user.two_factor_secret = secret; user.two_factor_enabled = enabled; user.updated_at = new Date().toISOString(); saveFallbackDb(); }
   },
 
   // WALLET OPERATIONS
@@ -1182,4 +1250,3 @@ export const dbRepo = {
     return logs.slice(0, limit);
   },
 };
-

@@ -1,6 +1,13 @@
 export interface User {
   id: string;
   full_name: string;
+  national_id?: string;
+  date_of_birth?: string;
+  auto_lock_minutes?: number;
+  two_factor_enabled?: boolean;
+  two_factor_secret?: string;
+  referral_code?: string;
+  referred_by?: string;
   email: string;
   phone: string;
   password_hash: string;
@@ -127,4 +134,3 @@ export interface AuditLog {
   metadata?: Record<string, any>;
   created_at: string;
 }
-

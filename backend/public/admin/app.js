@@ -17,6 +17,12 @@ const state = {
   activities: [],
   ledgerFilterType: 'ALL',
   ledgerSearch: '',
+  activitiesSubTab: 'ledger',
+  auditLogs: [],
+  auditSeverityFilter: 'ALL',
+  auditTypeFilter: 'ALL',
+  treasuryAuditData: null,
+  activeAuditLogId: null,
   tickets: [],
   ticketFilter: 'ALL',
   activeTicketId: null,
@@ -187,6 +193,25 @@ function initEventListeners() {
       }
     });
   }
+
+  // Audit Severity Filter Chips
+  document.querySelectorAll('[data-audit-sev]').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('[data-audit-sev]').forEach((c) => c.classList.remove('active'));
+      chip.classList.add('active');
+      state.auditSeverityFilter = chip.getAttribute('data-audit-sev');
+      renderAuditLogsTable();
+    });
+  });
+
+  // Audit Type Filter Select
+  const auditTypeSelect = document.getElementById('audit-type-filter');
+  if (auditTypeSelect) {
+    auditTypeSelect.addEventListener('change', (e) => {
+      state.auditTypeFilter = e.target.value;
+      renderAuditLogsTable();
+    });
+  }
 }
 
 async function loadAllData() {
@@ -195,6 +220,7 @@ async function loadAllData() {
     loadUsers(true),
     loadLoans(true),
     loadActivities(true),
+    loadAuditLogs(true),
     loadSupportTickets(true),
     loadSettings(true),
   ]);
@@ -225,6 +251,30 @@ function renderOverview() {
   const { metrics, recent_transactions, pending_loans } = data;
 
   // KPI Numbers
+  // 1. Company Master Wallet Pool (Paystack Live)
+  const poolEl = document.getElementById('kpi-company-pool');
+  if (poolEl) poolEl.textContent = formatKES(metrics.company_pool_balance);
+
+  const healthBadge = document.getElementById('kpi-treasury-health-badge');
+  if (healthBadge) {
+    if (metrics.treasury_health === 'HEALTHY') {
+      healthBadge.className = 'tag-pill mint';
+      healthBadge.textContent = 'HEALTHY RESERVE';
+    } else if (metrics.treasury_health === 'DEFICIT_ANOMALY') {
+      healthBadge.className = 'tag-pill alert-danger';
+      healthBadge.textContent = `DEFICIT ANOMALY (SHORTFALL: ${formatKES(Math.abs(metrics.treasury_discrepancy))})`;
+    } else {
+      healthBadge.className = 'tag-pill blue';
+      healthBadge.textContent = `SURPLUS RESERVE (+${formatKES(metrics.treasury_discrepancy)})`;
+    }
+  }
+
+  const poolSub = document.getElementById('kpi-company-pool-sub');
+  if (poolSub) {
+    poolSub.textContent = `Live Paystack KES Reserve • USD: $${Number(metrics.company_pool_usd || 0).toLocaleString()}`;
+  }
+
+  // 2. Member Liabilities & Other Metrics
   document.getElementById('kpi-total-liquidity').textContent = formatKES(metrics.total_liquidity);
   document.getElementById('kpi-total-users').textContent = metrics.total_users;
   document.getElementById('kpi-verified-users').textContent = `${metrics.verified_users} Verified`;
@@ -240,6 +290,32 @@ function renderOverview() {
   document.getElementById('badge-open-tickets').textContent = metrics.open_tickets_count;
   document.getElementById('overview-pending-pill').textContent = metrics.pending_loans_count;
   document.getElementById('overview-tickets-pill').textContent = metrics.open_tickets_count;
+
+  // Anomalies alerts indicators
+  const anomalyBadge = document.getElementById('badge-anomalies-count');
+  const anomalyPill = document.getElementById('overview-anomalies-pill');
+  if (metrics.anomalies_count > 0) {
+    if (anomalyBadge) {
+      anomalyBadge.textContent = metrics.anomalies_count;
+      anomalyBadge.classList.remove('hidden');
+    }
+    if (anomalyPill) {
+      anomalyPill.textContent = `${metrics.anomalies_count} Anomalies`;
+      anomalyPill.classList.remove('hidden');
+    }
+  } else {
+    if (anomalyBadge) anomalyBadge.classList.add('hidden');
+    if (anomalyPill) anomalyPill.classList.add('hidden');
+  }
+
+  // Sync Treasury Audit Banner Card
+  updateTreasuryAuditCard({
+    gateway_balance: metrics.company_pool_balance,
+    company_pool_usd: metrics.company_pool_usd,
+    total_user_liabilities: metrics.total_liquidity,
+    delta_vs_liabilities: metrics.treasury_discrepancy,
+    health_status: metrics.treasury_health,
+  });
 
   // Overview Recent Activities Table
   const tbody = document.getElementById('overview-activities-body');
@@ -737,6 +813,206 @@ function renderActivitiesTable() {
       <td><span class="badge-status ${tx.status === 'SUCCESS' ? 'success' : 'failed'}">${tx.status}</span></td>
     </tr>
   `).join('');
+}
+
+// 4b. ACTIVITIES SUB-TAB SWITCHER
+function switchActivitiesSubTab(tabName) {
+  state.activitiesSubTab = tabName;
+  const isLedger = tabName === 'ledger';
+
+  const btnLedger = document.getElementById('btn-subtab-ledger');
+  const btnAudit = document.getElementById('btn-subtab-auditlogs');
+  if (btnLedger) btnLedger.classList.toggle('active', isLedger);
+  if (btnAudit) btnAudit.classList.toggle('active', !isLedger);
+
+  const viewLedger = document.getElementById('view-activities-ledger');
+  const viewAudit = document.getElementById('view-activities-auditlogs');
+  if (viewLedger) viewLedger.classList.toggle('hidden', !isLedger);
+  if (viewAudit) viewAudit.classList.toggle('hidden', isLedger);
+
+  if (isLedger) {
+    loadActivities(true);
+  } else {
+    loadAuditLogs();
+  }
+}
+
+// 4c. TREASURY RECONCILIATION AUDIT ACTIONS
+function updateTreasuryAuditCard(data) {
+  if (!data) return;
+  const gwEl = document.getElementById('audit-gateway-balance');
+  const gwUsd = document.getElementById('audit-gateway-usd');
+  const liabEl = document.getElementById('audit-member-liabilities');
+  const flowEl = document.getElementById('audit-settled-flow');
+  const deltaEl = document.getElementById('audit-reserve-delta');
+  const healthPill = document.getElementById('audit-health-pill');
+
+  if (gwEl && data.gateway_balance !== undefined) {
+    gwEl.textContent = formatKES(data.gateway_balance);
+  }
+  if (gwUsd) {
+    const usd = data.company_pool_usd !== undefined ? data.company_pool_usd : 0;
+    gwUsd.textContent = `USD: $${Number(usd).toLocaleString()}`;
+  }
+  if (liabEl && data.total_user_liabilities !== undefined) {
+    liabEl.textContent = formatKES(data.total_user_liabilities);
+  }
+  if (flowEl && data.net_recorded_gateway_flow !== undefined) {
+    flowEl.textContent = formatKES(data.net_recorded_gateway_flow);
+  }
+
+  if (deltaEl && data.delta_vs_liabilities !== undefined) {
+    const delta = data.delta_vs_liabilities;
+    deltaEl.textContent = (delta >= 0 ? '+' : '') + formatKES(delta);
+    deltaEl.className = `tac-val ${delta < 0 ? 'text-rose' : 'text-mint'}`;
+  }
+
+  if (healthPill) {
+    if (data.health_status === 'HEALTHY' || data.health_status === 'SURPLUS') {
+      healthPill.className = 'tac-badge status mint';
+      healthPill.textContent = 'HEALTHY COVERAGE';
+    } else {
+      healthPill.className = 'tac-badge status alert';
+      healthPill.textContent = 'DEFICIT ANOMALY DETECTED';
+    }
+  }
+}
+
+async function runTreasuryAudit(silent = false) {
+  const btn = document.getElementById('btn-trigger-reconciliation');
+  const quickBtn = document.getElementById('btn-quick-audit');
+  if (btn) btn.classList.add('loading');
+  if (quickBtn) quickBtn.classList.add('loading');
+
+  try {
+    if (!silent) showToast('Querying Paystack live balance & executing 3-way reconciliation audit...', 'info');
+
+    const res = await fetch(`${API_BASE}/treasury/audit`);
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+
+    const auditData = json.data;
+    state.treasuryAuditData = auditData;
+    updateTreasuryAuditCard(auditData);
+
+    // Refresh overview & audit logs in background
+    loadOverview(true);
+    loadAuditLogs(true);
+
+    if (auditData.anomalies && auditData.anomalies.length > 0) {
+      showToast(`⚠️ Anomaly Logged: ${auditData.anomalies[0]}`, 'warning');
+    } else {
+      showToast(`✅ Paystack live pool (KSh ${Number(auditData.gateway_balance).toLocaleString()}) fully verified!`, 'success');
+    }
+  } catch (err) {
+    console.error('runTreasuryAudit error:', err);
+    showToast(err.message || 'Failed to complete treasury audit', 'error');
+  } finally {
+    if (btn) btn.classList.remove('loading');
+    if (quickBtn) quickBtn.classList.remove('loading');
+  }
+}
+
+// 4d. SYSTEM AUDIT & ANOMALY LOGS
+async function loadAuditLogs(silent = false) {
+  try {
+    const res = await fetch(`${API_BASE}/audit-logs?limit=200`);
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+
+    state.auditLogs = json.data;
+    renderAuditLogsTable();
+
+    // Update counter
+    const countEl = document.getElementById('audit-logs-count-display');
+    const anomalyCount = state.auditLogs.filter((l) => l.severity === 'CRITICAL' || l.severity === 'WARNING').length;
+    if (countEl) countEl.textContent = anomalyCount > 0 ? `${anomalyCount} Alerts` : `${state.auditLogs.length}`;
+  } catch (err) {
+    console.error('Failed to load audit logs:', err);
+    if (!silent) showToast(err.message || 'Error loading audit logs', 'error');
+  }
+}
+
+function renderAuditLogsTable() {
+  const tbody = document.getElementById('audit-logs-table-body');
+  if (!tbody) return;
+
+  let list = [...state.auditLogs];
+
+  if (state.auditSeverityFilter !== 'ALL') {
+    list = list.filter((l) => l.severity === state.auditSeverityFilter);
+  }
+
+  if (state.auditTypeFilter !== 'ALL') {
+    list = list.filter((l) => l.event_type === state.auditTypeFilter);
+  }
+
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No audit records matching selected filters.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map((log) => `
+    <tr>
+      <td class="font-mono" style="font-size:12px; color:var(--text-muted);">${formatDate(log.created_at)}</td>
+      <td>
+        <span class="badge-status ${getAuditSeverityBadgeClass(log.severity)}">
+          ${log.severity === 'CRITICAL' ? '<span class="pulse-dot-rose"></span> ' : ''}${log.severity}
+        </span>
+      </td>
+      <td><span class="font-mono" style="font-size:11.5px; color:var(--blue); font-weight:600;">${escapeHtml(log.event_type)}</span></td>
+      <td style="font-weight:600; color:#ffffff;">${escapeHtml(log.title || 'System Audit Event')}</td>
+      <td style="font-size:12px; max-width:320px; color:var(--text-secondary);">${escapeHtml(log.description || '')}</td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="openAuditModal('${log.id}')">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <span>Inspect</span>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function getAuditSeverityBadgeClass(severity) {
+  switch (severity) {
+    case 'CRITICAL': return 'failed pulse-border';
+    case 'WARNING': return 'pending';
+    case 'INFO': return 'active';
+    default: return 'neutral';
+  }
+}
+
+// 4e. AUDIT INSPECTION MODAL
+function openAuditModal(logId) {
+  const log = state.auditLogs.find((l) => l.id === logId);
+  if (!log) return;
+
+  state.activeAuditLogId = logId;
+  const modal = document.getElementById('modal-audit-detail');
+  if (!modal) return;
+
+  document.getElementById('modal-audit-title').textContent = log.title || 'Audit Diagnostic Record';
+  const sevEl = document.getElementById('modal-audit-severity');
+  if (sevEl) {
+    sevEl.className = `badge-status ${getAuditSeverityBadgeClass(log.severity)}`;
+    sevEl.textContent = log.severity;
+  }
+  document.getElementById('modal-audit-description').textContent = log.description || '-';
+  document.getElementById('modal-audit-time').textContent = formatDate(log.created_at);
+  document.getElementById('modal-audit-event').textContent = log.event_type;
+  document.getElementById('modal-audit-id').textContent = log.id;
+
+  const jsonBox = document.getElementById('modal-audit-json');
+  if (jsonBox) {
+    jsonBox.textContent = JSON.stringify(log.metadata || {}, null, 2);
+  }
+
+  modal.classList.remove('hidden');
+}
+
+function closeAuditModal() {
+  state.activeAuditLogId = null;
+  document.getElementById('modal-audit-detail')?.classList.add('hidden');
 }
 
 // =========================================================

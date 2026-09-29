@@ -8,8 +8,11 @@ import { UserInvestment } from '../types';
 export const investmentController = {
   async getPlans(req: AuthenticatedRequest, res: Response) {
     try {
-      const plans = await dbRepo.getAllInvestmentPlans();
-      return res.json({ success: true, data: plans });
+      return res.json({ success: true, data: [{
+        id: 'resi_savings_16', name: 'Resi Growth Savings', category: 'Flexible Savings', annual_percentage_yield: 16,
+        duration_days: 365, min_amount: 100, max_amount: 5000000, risk_level: 'LOW',
+        description: 'A secure savings account earning 16% per annum, calculated daily and paid at maturity.',
+      }] });
     } catch (error: any) {
       return res.status(500).json({ success: false, message: error.message });
     }
@@ -69,7 +72,9 @@ export const investmentController = {
       }
 
       // Check Plan bounds
-      const plan = await dbRepo.getInvestmentPlanById(plan_id);
+      const plan = plan_id === 'resi_savings_16'
+        ? { id: 'resi_savings_16', name: 'Resi Growth Savings', annual_percentage_yield: 16, duration_days: 365, min_amount: 100, max_amount: 5000000 }
+        : await dbRepo.getInvestmentPlanById(plan_id);
       if (!plan) return res.status(404).json({ success: false, message: 'Investment plan not found' });
 
       if (investAmount < plan.min_amount) {

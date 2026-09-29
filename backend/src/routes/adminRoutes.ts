@@ -20,6 +20,8 @@ router.post('/loans/seed-demo', adminController.seedDemoLoan);
 
 // 4. Global Activity & Audit Ledger
 router.get('/activities', adminController.getActivities);
+router.get('/audit-logs', adminController.getAuditLogs);
+router.get('/treasury/audit', adminController.getTreasuryAudit);
 
 // 5. System Settings (Welcome Bonus, Referral Bonus, Limits)
 router.get('/settings', adminController.getSettings);
