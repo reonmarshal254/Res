@@ -30,12 +30,10 @@ app.get('/admin', (req, res) => {
 
 // Health Check & System Status
 app.get('/', (_req, res) => {
-  res.json({
-    success: true,
-    service: 'Resi API',
-    status: 'online',
-    health: '/api/health',
-  });
+  const landingPath = path.resolve(__dirname, '../public/landing/index.html');
+  const apkUrl = process.env.APK_DOWNLOAD_URL || '#';
+  const html = require('fs').readFileSync(landingPath, 'utf8').replaceAll('{{APK_DOWNLOAD_URL}}', apkUrl);
+  res.type('html').send(html);
 });
 
 app.get('/api/health', (req, res) => {
