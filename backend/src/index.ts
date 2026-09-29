@@ -23,6 +23,7 @@ app.use(requestLogger);
 // Admin Web Terminal Static Assets
 const adminPublicPath = path.resolve(__dirname, '../public/admin');
 app.use('/admin', express.static(adminPublicPath));
+app.use('/uploads', express.static(path.resolve(__dirname, '../public/uploads')));
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(adminPublicPath, 'index.html'));
 });

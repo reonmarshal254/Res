@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: resi-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: resi-db
+          property: connectionString
+
+databases:
+  - name: resi-db
+    plan: free
+    databaseName: resi_fintech
+    user: resi
