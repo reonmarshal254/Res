@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resi Fintech — Admin Web Terminal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2248%22 fill=%22%2300D09C%22/><text y=%2265%22 font-size=%2255%22 font-weight=%22bold%22 font-family=%22sans-serif%22 fill=%22%23070A11%22 x=%2228%22>R</text></svg>">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">
+          <span>R</span>
+        </div>
+        <div class="brand-info">
+          <h2>Resi M-Bank</h2>
+          <span class="badge-terminal">ADMIN TERMINAL</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="overview">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <span>Overview</span>
+        </button>
+
+        <button class="nav-item" data-tab="users">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <span>Users & KYC</span>
+          <span class="nav-counter" id="badge-users-count">0</span>
+        </button>
+
+        <button class="nav-item" data-tab="loans">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <span>Loan Desk</span>
+          <span class="nav-counter alert" id="badge-pending-loans">0</span>
+        </button>
+
+        <button class="nav-item" data-tab="activities">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          <span>Activities Ledger</span>
+        </button>
+
+        <button class="nav-item" data-tab="support">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          <span>Live Support</span>
+          <span class="nav-counter mint" id="badge-open-tickets">0</span>
+        </button>
+
+        <button class="nav-item" data-tab="settings">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span>Bonus & Settings</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="server-status">
+          <span class="status-dot pulse"></span>
+          <div>
+            <div class="status-title">Backend API Online</div>
+            <div class="status-sub" id="backend-engine-text">Local Engine Mode</div>
+          </div>
+        </div>
+        <div class="system-time" id="system-live-clock">--:--:--</div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="main-container">
+      <!-- TOP HEADER -->
+      <header class="top-header">
+        <div class="header-left">
+          <h1 id="page-title">Platform Overview</h1>
+          <p id="page-subtitle">Real-time fintech metrics, liquidity, and operational controls</p>
+        </div>
+        <div class="header-actions">
+          <div class="currency-tag">
+            <span class="flag">🇰🇪</span>
+            <span>KES (Kenya Shillings)</span>
+          </div>
+          <button class="btn btn-secondary" id="btn-refresh" title="Refresh Live Data">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            <span>Refresh</span>
+          </button>
+          <div class="admin-profile">
+            <div class="avatar">AD</div>
+            <div class="profile-text">
+              <span class="admin-name">Super Administrator</span>
+              <span class="admin-role">Root Access</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- TAB 1: OVERVIEW -->
+      <section class="tab-pane active" id="pane-overview">
+        <!-- KPI METRICS GRID -->
+        <div class="kpi-grid">
+          <div class="kpi-card mint">
+            <div class="kpi-header">
+              <span class="kpi-label">TOTAL PLATFORM LIQUIDITY</span>
+              <span class="kpi-icon mint-bg">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+              </span>
+            </div>
+            <div class="kpi-value" id="kpi-total-liquidity">KSh 0</div>
+            <div class="kpi-footer">
+              <span class="tag-pill mint">Combined Vault & Wallets</span>
+            </div>
+          </div>
+
+          <div class="kpi-card blue">
+            <div class="kpi-header">
+              <span class="kpi-label">REGISTERED USERS</span>
+              <span class="kpi-icon blue-bg">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              </span>
+            </div>
+            <div class="kpi-value" id="kpi-total-users">0</div>
+            <div class="kpi-footer">
+              <span class="sub-stat" id="kpi-verified-users">0 Verified</span> • <span class="sub-stat alert" id="kpi-unverified-users">0 Pending KYC</span>
+            </div>
+          </div>
+
+          <div class="kpi-card amber">
+            <div class="kpi-header">
+              <span class="kpi-label">PENDING LOAN APPROVALS</span>
+              <span class="kpi-icon amber-bg">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </span>
+            </div>
+            <div class="kpi-value" id="kpi-pending-loans">0</div>
+            <div class="kpi-footer">
+              <span class="sub-stat amber" id="kpi-pending-amount">KSh 0 pending disbursement</span>
+            </div>
+          </div>
+
+          <div class="kpi-card purple">
+            <div class="kpi-header">
+              <span class="kpi-label">DISBURSED LOAN VOLUME</span>
+              <span class="kpi-icon purple-bg">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </span>
+            </div>
+            <div class="kpi-value" id="kpi-disbursed-volume">KSh 0</div>
+            <div class="kpi-footer">
+              <span class="sub-stat" id="kpi-active-loans">0 Active Loans</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- QUICK CONTROL HERO -->
+        <div class="quick-banner">
+          <div class="banner-content">
+            <h3>⚡ System Action Center</h3>
+            <p>Direct underwriting desk shortcuts: approve pending loans, manage welcome rewards, and answer real-time member inquiries.</p>
+          </div>
+          <div class="banner-buttons">
+            <button class="btn btn-primary" onclick="switchTab('loans')">
+              <span>Go to Loan Desk</span>
+              <span class="badge-mini" id="overview-pending-pill">0</span>
+            </button>
+            <button class="btn btn-secondary" onclick="switchTab('support')">
+              <span>View Support Tickets</span>
+              <span class="badge-mini mint" id="overview-tickets-pill">0</span>
+            </button>
+            <button class="btn btn-outline" onclick="switchTab('settings')">
+              <span>Edit Bonuses (KES)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- SPLIT OVERVIEW GRIDS -->
+        <div class="overview-split">
+          <!-- Recent Audit Ledger -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                <h4>Recent Ledger Activities</h4>
+              </div>
+              <button class="btn-link" onclick="switchTab('activities')">View Full Ledger →</button>
+            </div>
+            <div class="table-container">
+              <table class="data-table" id="table-overview-activities">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>User</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Channel</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="overview-activities-body">
+                  <tr><td colspan="6" class="table-loading">Loading live activities...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Pending Loan Review Queue -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <h4>Pending Loan Underwriting</h4>
+              </div>
+              <button class="btn-link" onclick="seedDemoLoan()">+ Simulate Application</button>
+            </div>
+            <div class="pending-loans-list" id="overview-loans-list">
+              <div class="empty-state">No pending loans requiring review.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: USERS & KYC -->
+      <section class="tab-pane" id="pane-users">
+        <div class="toolbar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="user-search-input" placeholder="Search by name, email, phone, or virtual account number...">
+          </div>
+          <div class="filter-group">
+            <button class="filter-chip active" data-user-filter="ALL">All Users</button>
+            <button class="filter-chip" data-user-filter="VERIFIED">Verified KYC</button>
+            <button class="filter-chip" data-user-filter="UNVERIFIED">Unverified</button>
+            <button class="filter-chip" data-user-filter="SUSPENDED">Suspended Users</button>
+            <button class="filter-chip" data-user-filter="FROZEN">Frozen Wallets</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+              <h4>Registered Customer Accounts (<span id="users-count-display">0</span>)</h4>
+            </div>
+            <div class="panel-actions">
+              <span class="info-badge">PostgreSQL Database Synced</span>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="table-users">
+              <thead>
+                <tr>
+                  <th>Customer Profile</th>
+                  <th>Contact Info</th>
+                  <th>Virtual NUBAN / Bank</th>
+                  <th>Wallet Balance</th>
+                  <th>KYC Status</th>
+                  <th>Tier</th>
+                  <th>Account / Wallet State</th>
+                  <th>Administrative Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-table-body">
+                <tr><td colspan="8" class="table-loading">Loading user directory...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: LOAN DESK -->
+      <section class="tab-pane" id="pane-loans">
+        <div class="toolbar">
+          <div class="filter-group">
+            <button class="filter-chip active" data-loan-filter="ALL">All Loans</button>
+            <button class="filter-chip" data-loan-filter="PENDING">Pending Approval <span class="badge-dot-amber"></span></button>
+            <button class="filter-chip" data-loan-filter="ACTIVE">Active (Disbursed)</button>
+            <button class="filter-chip" data-loan-filter="COMPLETED">Fully Repaid</button>
+            <button class="filter-chip" data-loan-filter="REJECTED">Rejected</button>
+          </div>
+          <button class="btn btn-primary" onclick="seedDemoLoan()">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>Simulate Loan Application</span>
+          </button>
+        </div>
+
+        <!-- PENDING APPROVAL HIGHLIGHTS -->
+        <div class="loan-approval-header">
+          <h3>⚡ Underwriting Queue (Instant Wallet Disbursement)</h3>
+          <p>Approving a loan instantly credits the borrower's wallet balance and initiates automated monthly repayment schedules.</p>
+        </div>
+
+        <div class="pending-cards-grid" id="loans-pending-grid">
+          <div class="empty-state">No pending applications at this moment.</div>
+        </div>
+
+        <!-- ALL LOANS TABLE -->
+        <div class="panel mt-4">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              <h4>All Loan Records (<span id="loans-count-display">0</span>)</h4>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="table-all-loans">
+              <thead>
+                <tr>
+                  <th>Borrower</th>
+                  <th>Principal Amount</th>
+                  <th>Tenure</th>
+                  <th>Interest</th>
+                  <th>Total Payable</th>
+                  <th>Monthly Installment</th>
+                  <th>Purpose</th>
+                  <th>Status</th>
+                  <th>Applied On</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="loans-table-body">
+                <tr><td colspan="10" class="table-loading">Loading loan portfolio...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: ACTIVITIES LEDGER -->
+      <section class="tab-pane" id="pane-activities">
+        <div class="toolbar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="ledger-search-input" placeholder="Search reference, description, member name...">
+          </div>
+          <div class="select-wrapper">
+            <select id="ledger-type-filter" class="custom-select">
+              <option value="ALL">All Transaction Types</option>
+              <option value="DEPOSIT">Deposits & Welcome Bonus</option>
+              <option value="WITHDRAWAL">Withdrawals (Bank / M-PESA)</option>
+              <option value="TRANSFER">P2P Transfers</option>
+              <option value="LOAN_DISBURSEMENT">Loan Disbursements</option>
+              <option value="LOAN_REPAYMENT">Loan Repayments</option>
+              <option value="INVESTMENT">Investment Subscriptions</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+              <h4>Global Financial Audit Ledger (<span id="ledger-count-display">0</span> entries)</h4>
+            </div>
+            <span class="info-badge">Immutable Central Transaction Log</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="table-ledger">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Reference</th>
+                  <th>Member</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                  <th>Amount</th>
+                  <th>Channel</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="ledger-table-body">
+                <tr><td colspan="8" class="table-loading">Loading transaction ledger...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: LIVE SUPPORT -->
+      <section class="tab-pane" id="pane-support">
+        <div class="support-layout">
+          <!-- LEFT: TICKET INBOX -->
+          <div class="support-inbox">
+            <div class="inbox-header">
+              <div class="inbox-title">
+                <h4>Support Tickets</h4>
+                <span class="badge-mini mint" id="support-open-count">0 Open</span>
+              </div>
+              <div class="inbox-actions">
+                <button class="btn btn-secondary btn-sm" onclick="seedDemoSupportTicket()">+ Simulate Ticket</button>
+              </div>
+            </div>
+            <div class="inbox-filters">
+              <button class="filter-chip active" data-ticket-filter="ALL">All</button>
+              <button class="filter-chip" data-ticket-filter="OPEN">Open</button>
+              <button class="filter-chip" data-ticket-filter="RESOLVED">Resolved</button>
+            </div>
+            <div class="ticket-list" id="support-ticket-list">
+              <div class="empty-state">No support tickets found.</div>
+            </div>
+          </div>
+
+          <!-- RIGHT: ACTIVE CONVERSATION MESSENGER -->
+          <div class="support-chatbox" id="support-chatbox">
+            <div class="chatbox-empty" id="chatbox-empty-view">
+              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#2A3854" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+              <h4>Select a ticket to open conversation</h4>
+              <p>Respond to customer inquiries in real-time, clarify loan requests, or mark resolutions.</p>
+            </div>
+
+            <div class="chatbox-active hidden" id="chatbox-active-view">
+              <!-- Chat Header -->
+              <div class="chat-header">
+                <div class="chat-user-info">
+                  <h4 id="chat-ticket-subject">Subject</h4>
+                  <div class="chat-meta">
+                    <span id="chat-ticket-user">Customer Name</span> • 
+                    <span id="chat-ticket-email">email@domain.com</span> • 
+                    <span class="badge-status" id="chat-ticket-badge">OPEN</span>
+                  </div>
+                </div>
+                <div class="chat-actions">
+                  <button class="btn btn-secondary btn-sm" id="btn-toggle-ticket-status" onclick="toggleCurrentTicketStatus()">
+                    Mark as Resolved
+                  </button>
+                </div>
+              </div>
+
+              <!-- Message Stream -->
+              <div class="chat-messages" id="chat-messages-container">
+                <!-- Messages populated via JS -->
+              </div>
+
+              <!-- Reply Input Box -->
+              <div class="chat-composer">
+                <input type="text" id="chat-reply-input" placeholder="Type administrative response (Press Enter to Send)..." autocomplete="off">
+                <button class="btn btn-primary" id="btn-send-reply" onclick="sendSupportReply()">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                  <span>Send</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 6: BONUS & SETTINGS -->
+      <section class="tab-pane" id="pane-settings">
+        <div class="settings-grid">
+          <!-- WELCOME BONUS CARD -->
+          <div class="panel settings-card">
+            <div class="panel-header">
+              <div class="panel-title">
+                <div class="kpi-icon mint-bg">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>
+                </div>
+                <div>
+                  <h4>Welcome / Signup Bonus</h4>
+                  <span class="subtext">Auto-credited into newly registered member wallets</span>
+                </div>
+              </div>
+              <div class="panel-actions" style="display:flex; align-items:center; gap:10px;">
+                <span id="signup-bonus-status-pill" class="badge-status active">ENABLED</span>
+                <label class="switch">
+                  <input type="checkbox" id="toggle-signup-bonus" checked onchange="handleSignupBonusToggle(this.checked)">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+            <div class="settings-body">
+              <p class="description">
+                Toggle the introductory promo bonus <strong>ON</strong> or <strong>OFF</strong>. When active, newly registered users immediately receive the configured credit in their wallet. When disabled, new users start with KSh 0.00.
+              </p>
+              <div class="form-group" id="welcome-bonus-input-group">
+                <label for="input-welcome-bonus">WELCOME BONUS AMOUNT (KES)</label>
+                <div class="input-with-affix">
+                  <span class="affix">KSh</span>
+                  <input type="number" id="input-welcome-bonus" min="0" step="500" value="25000">
+                </div>
+                <span class="helper-text">Persisted in PostgreSQL database across server restarts and deployments.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- REFERRAL BONUS CARD -->
+          <div class="panel settings-card">
+            <div class="panel-header">
+              <div class="panel-title">
+                <div class="kpi-icon purple-bg">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                </div>
+                <div>
+                  <h4>Referral Bonus Configuration</h4>
+                  <span class="subtext">Rewarded to existing members per successful invite</span>
+                </div>
+              </div>
+            </div>
+            <div class="settings-body">
+              <p class="description">
+                Set the referral bounty credited to an active user's account when their referred peer signs up with their invite code.
+              </p>
+              <div class="form-group">
+                <label for="input-referral-bonus">REFERRAL BOUNTY PER INVITE (KES)</label>
+                <div class="input-with-affix">
+                  <span class="affix">KSh</span>
+                  <input type="number" id="input-referral-bonus" min="0" step="100" value="500">
+                </div>
+                <span class="helper-text">Displayed dynamically across user invite modals and promotional banners.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- TRANSACTION LIMITS CARD -->
+          <div class="panel settings-card">
+            <div class="panel-header">
+              <div class="panel-title">
+                <div class="kpi-icon blue-bg">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 10"></polyline></svg>
+                </div>
+                <div>
+                  <h4>Platform Limits & Thresholds</h4>
+                  <span class="subtext">Minimum transaction gatekeeping</span>
+                </div>
+              </div>
+            </div>
+            <div class="settings-body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="input-min-deposit">MINIMUM DEPOSIT (KES)</label>
+                  <div class="input-with-affix">
+                    <span class="affix">KSh</span>
+                    <input type="number" id="input-min-deposit" min="10" step="10" value="100">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="input-min-withdrawal">MINIMUM WITHDRAWAL (KES)</label>
+                  <div class="input-with-affix">
+                    <span class="affix">KSh</span>
+                    <input type="number" id="input-min-withdrawal" min="10" step="10" value="100">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SAVE ACTION BAR -->
+          <div class="settings-save-bar">
+            <div>
+              <strong>Save Platform Configuration</strong>
+              <div class="subtext">Changes take effect immediately across all newly created accounts and API requests.</div>
+            </div>
+            <button class="btn btn-primary btn-lg" id="btn-save-settings" onclick="saveSettings()">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+              <span>Save System Settings</span>
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- REJECTION REASON MODAL -->
+  <div class="modal-backdrop hidden" id="modal-reject">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h4>Decline Loan Application</h4>
+        <button class="modal-close" onclick="closeRejectModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Please enter the underwriting rationale for rejecting this loan. The applicant will be notified via in-app alert.</p>
+        <div class="form-group mt-3">
+          <label for="input-reject-reason">REJECTION REASON</label>
+          <textarea id="input-reject-reason" rows="3" placeholder="e.g. Current monthly debt-to-income ratio exceeds underwriting threshold...">Does not meet current credit risk underwriting criteria</textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeRejectModal()">Cancel</button>
+        <button class="btn btn-danger" id="btn-confirm-reject" onclick="confirmRejectLoan()">Confirm Rejection</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "resi-fintech-monorepo",
+  "version": "1.0.0",
+  "description": "Full-stack Fintech App: React Native (Expo Go) + Node.js/PostgreSQL Backend with Paystack, Investments & Loans",
+  "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "dev:mobile": "cd mobile && npx expo start",
+    "seed:backend": "cd backend && npm run seed",
+    "build:backend": "cd backend && npm run build",
+    "admin": "start http://localhost:5000/admin"
+  },
+  "keywords": ["fintech", "paystack", "react-native", "expo-go", "nodejs", "postgresql"]
+}

@@ -1,0 +1,333 @@
+{
+  "users": [
+    {
+      "id": "usr_demo_f799ace2",
+      "full_name": "Alex Morgan",
+      "email": "demo@resi.com",
+      "phone": "+254712982345",
+      "password_hash": "$2a$10$Qi/q0shdyLHfYpSS5burXOY51IvzLkdfKPfC517WbUK0JLPXDRw8m",
+      "transaction_pin": "$2a$10$3NKjpry5C.312mdT8iyUAeZeMrrKAENth2ZoIaiFDoUKCyr.u8kye",
+      "tier": 2,
+      "is_verified": true,
+      "created_at": "2026-09-29T04:42:18.266Z",
+      "updated_at": "2026-09-29T04:42:18.266Z"
+    }
+  ],
+  "wallets": [
+    {
+      "id": "wlt_demo_b7319baa",
+      "user_id": "usr_demo_f799ace2",
+      "account_number": "0712982345",
+      "bank_name": "Resi M-Bank Kenya",
+      "balance": 180000,
+      "ledger_balance": 180000,
+      "currency": "KES",
+      "is_frozen": false,
+      "created_at": "2026-09-29T04:42:18.266Z",
+      "updated_at": "2026-09-29T04:54:08.908Z"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "tx_45a182ca9349",
+      "user_id": "usr_demo_f799ace2",
+      "wallet_id": "wlt_demo_b7319baa",
+      "type": "LOAN_DISBURSEMENT",
+      "amount": 25000,
+      "fee": 0,
+      "status": "SUCCESS",
+      "reference": "resi_loan_1790657648909_9573",
+      "channel": "WALLET",
+      "description": "Instant Loan Disbursed: Working Capital",
+      "metadata": {
+        "loanId": "loan_974eb9b349bd",
+        "tenure_months": 3,
+        "monthly_installment": 9208.33
+      },
+      "created_at": "2026-09-29T04:54:08.908Z"
+    },
+    {
+      "id": "tx_db5c9801cc21",
+      "user_id": "usr_demo_f799ace2",
+      "wallet_id": "wlt_demo_b7319baa",
+      "type": "INVESTMENT",
+      "amount": 10000,
+      "fee": 0,
+      "status": "SUCCESS",
+      "reference": "resi_inv_1790657648639_1291",
+      "channel": "WALLET",
+      "description": "Invested in Federal Treasury Yield Note (13.5% APY)",
+      "metadata": {
+        "plan_id": "plan_treasury_01",
+        "investmentId": "inv_2541e0e80794",
+        "apy": 13.5
+      },
+      "created_at": "2026-09-29T04:54:08.639Z"
+    },
+    {
+      "id": "tx_a12582d2f8e6",
+      "user_id": "usr_demo_f799ace2",
+      "wallet_id": "wlt_demo_b7319baa",
+      "type": "DEPOSIT",
+      "amount": 15000,
+      "fee": 0,
+      "status": "SUCCESS",
+      "reference": "resi_dep_1790657648128_4718",
+      "channel": "PAYSTACK",
+      "description": "Wallet top-up via Paystack",
+      "metadata": {
+        "initiated_at": "2026-09-29T04:54:08.129Z",
+        "paid_at": "2026-09-29T04:54:08.140Z",
+        "gateway_response": "Successful (Demo Mode)"
+      },
+      "created_at": "2026-09-29T04:54:08.129Z"
+    },
+    {
+      "id": "tx_6eb97407",
+      "user_id": "usr_demo_f799ace2",
+      "wallet_id": "wlt_demo_b7319baa",
+      "type": "DEPOSIT",
+      "amount": 150000,
+      "fee": 0,
+      "status": "SUCCESS",
+      "reference": "INIT_DEP_1790656938272",
+      "channel": "PAYSTACK",
+      "description": "Initial Wallet Funding via Paystack Card",
+      "created_at": "2026-09-26T04:42:18.272Z"
+    }
+  ],
+  "investment_plans": [
+    {
+      "id": "plan_treasury_01",
+      "name": "Federal Treasury Yield Note",
+      "category": "Fixed Income",
+      "annual_percentage_yield": 13.5,
+      "duration_days": 90,
+      "min_amount": 5000,
+      "max_amount": 5000000,
+      "risk_level": "LOW",
+      "description": "Backed by government short-term debt instruments. Guaranteed capital preservation and stable quarterly returns.",
+      "is_active": true
+    },
+    {
+      "id": "plan_agri_02",
+      "name": "AgriTech Growth Fund",
+      "category": "Agriculture",
+      "annual_percentage_yield": 18,
+      "duration_days": 180,
+      "min_amount": 10000,
+      "max_amount": 2500000,
+      "risk_level": "MODERATE",
+      "description": "Finance high-yield mechanized cereal and poultry production with guaranteed off-taker contracts.",
+      "is_active": true
+    },
+    {
+      "id": "plan_reit_03",
+      "name": "Commercial Real Estate REIT",
+      "category": "Real Estate",
+      "annual_percentage_yield": 16.5,
+      "duration_days": 365,
+      "min_amount": 25000,
+      "max_amount": 20000000,
+      "risk_level": "MODERATE",
+      "description": "Fractional ownership in prime commercial logistics and tech hub rentals in metropolitan areas.",
+      "is_active": true
+    },
+    {
+      "id": "plan_tech_04",
+      "name": "Pan-African Tech Alpha",
+      "category": "Venture & Equities",
+      "annual_percentage_yield": 24,
+      "duration_days": 180,
+      "min_amount": 50000,
+      "max_amount": 10000000,
+      "risk_level": "HIGH",
+      "description": "Exposure to high-growth African fintech and SaaS companies with compounding returns.",
+      "is_active": true
+    }
+  ],
+  "investments": [
+    {
+      "id": "inv_2541e0e80794",
+      "user_id": "usr_demo_f799ace2",
+      "plan_id": "plan_treasury_01",
+      "plan_name": "Federal Treasury Yield Note",
+      "principal_amount": 10000,
+      "expected_return": 10332.88,
+      "actual_return": 0,
+      "duration_days": 90,
+      "start_date": "2026-09-29T04:54:08.638Z",
+      "maturity_date": "2026-12-28T04:54:08.638Z",
+      "status": "ACTIVE",
+      "created_at": "2026-09-29T04:54:08.641Z"
+    },
+    {
+      "id": "inv_seed_5982f6c2",
+      "user_id": "usr_demo_f799ace2",
+      "plan_id": "plan_treasury_01",
+      "plan_name": "Federal Treasury Yield Note",
+      "principal_amount": 50000,
+      "expected_return": 51664.38,
+      "actual_return": 0,
+      "duration_days": 90,
+      "start_date": "2026-09-14T04:42:18.273Z",
+      "maturity_date": "2026-12-13T04:42:18.273Z",
+      "status": "ACTIVE",
+      "created_at": "2026-09-14T04:42:18.273Z"
+    }
+  ],
+  "loans": [
+    {
+      "id": "loan_app_628579",
+      "user_id": "usr_1893ba8486ad",
+      "amount": 45000,
+      "interest_rate": 9.5,
+      "total_payable": 46068.75,
+      "amount_paid": 0,
+      "tenure_months": 3,
+      "monthly_installment": 15356.25,
+      "purpose": "Inventory Purchase for Nairobi Electronics Stall (M-PESA merchant)",
+      "status": "PENDING",
+      "created_at": "2026-09-29T08:30:28.579Z"
+    },
+    {
+      "id": "loan_974eb9b349bd",
+      "user_id": "usr_demo_f799ace2",
+      "amount": 25000,
+      "interest_rate": 10.5,
+      "total_payable": 27625,
+      "amount_paid": 0,
+      "tenure_months": 3,
+      "monthly_installment": 9208.33,
+      "purpose": "Working Capital",
+      "status": "ACTIVE",
+      "disbursed_at": "2026-09-29T04:54:08.908Z",
+      "due_date": "2026-12-29T04:54:08.908Z",
+      "created_at": "2026-09-29T04:54:08.908Z"
+    }
+  ],
+  "loan_schedules": [
+    {
+      "id": "sched_38f341054c76",
+      "loan_id": "loan_974eb9b349bd",
+      "installment_number": 1,
+      "amount_due": 9208.33,
+      "amount_paid": 0,
+      "due_date": "2026-10-29T04:54:08.908Z",
+      "status": "PENDING"
+    },
+    {
+      "id": "sched_d192514215cf",
+      "loan_id": "loan_974eb9b349bd",
+      "installment_number": 2,
+      "amount_due": 9208.33,
+      "amount_paid": 0,
+      "due_date": "2026-11-29T04:54:08.908Z",
+      "status": "PENDING"
+    },
+    {
+      "id": "sched_ea51af927c77",
+      "loan_id": "loan_974eb9b349bd",
+      "installment_number": 3,
+      "amount_due": 9208.34,
+      "amount_paid": 0,
+      "due_date": "2026-12-29T04:54:08.908Z",
+      "status": "PENDING"
+    },
+    {
+      "id": "sched_628579_1",
+      "loan_id": "loan_app_628579",
+      "installment_number": 1,
+      "amount_due": 15356.25,
+      "amount_paid": 0,
+      "due_date": "2026-10-29T08:30:28.579Z",
+      "status": "PENDING"
+    },
+    {
+      "id": "sched_628579_2",
+      "loan_id": "loan_app_628579",
+      "installment_number": 2,
+      "amount_due": 15356.25,
+      "amount_paid": 0,
+      "due_date": "2026-11-29T08:30:28.579Z",
+      "status": "PENDING"
+    },
+    {
+      "id": "sched_628579_3",
+      "loan_id": "loan_app_628579",
+      "installment_number": 3,
+      "amount_due": 15356.25,
+      "amount_paid": 0,
+      "due_date": "2026-12-29T08:30:28.579Z",
+      "status": "PENDING"
+    }
+  ],
+  "beneficiaries": [],
+  "system_settings": {
+    "id": "global",
+    "welcome_bonus": 50,
+    "signup_bonus_enabled": true,
+    "referral_bonus": 500,
+    "min_deposit": 100,
+    "min_withdrawal": 1000,
+    "currency": "KES",
+    "maintenance_mode": false,
+    "updated_at": "2026-09-29T11:06:44.840Z"
+  },
+  "support_tickets": [
+    {
+      "id": "ticket_001",
+      "user_id": "usr_demo_f799ace2",
+      "user_name": "Alex Morgan",
+      "user_email": "demo@resi.com",
+      "subject": "Credit Limit Upgrade to KES 500,000",
+      "status": "OPEN",
+      "priority": "HIGH",
+      "created_at": "2026-09-29T06:18:52.697Z",
+      "updated_at": "2026-09-29T08:29:47.674Z",
+      "messages": [
+        {
+          "id": "msg_01",
+          "sender": "USER",
+          "sender_name": "Alex Morgan",
+          "text": "Hello admin team, I have been using Resi Vault with good savings volume. Can you review and approve my Tier 2 credit limit upgrade?",
+          "timestamp": "2026-09-29T06:18:52.698Z"
+        },
+        {
+          "id": "msg_1790670587674",
+          "sender": "ADMIN",
+          "sender_name": "Resi Senior Operations Desk",
+          "text": "ok",
+          "timestamp": "2026-09-29T08:29:47.674Z"
+        }
+      ]
+    },
+    {
+      "id": "ticket_002",
+      "user_id": "usr_demo_f799ace2",
+      "user_name": "Alex Morgan",
+      "user_email": "demo@resi.com",
+      "subject": "M-PESA Express Deposit Inquiry",
+      "status": "RESOLVED",
+      "priority": "NORMAL",
+      "created_at": "2026-09-28T08:18:52.698Z",
+      "updated_at": "2026-09-28T08:48:52.698Z",
+      "messages": [
+        {
+          "id": "msg_02",
+          "sender": "USER",
+          "sender_name": "Alex Morgan",
+          "text": "Just wanted to confirm the average STK push reflection time for KES 50,000.",
+          "timestamp": "2026-09-28T08:18:52.698Z"
+        },
+        {
+          "id": "msg_03",
+          "sender": "ADMIN",
+          "sender_name": "Resi Desk Officer",
+          "text": "Hi Alex, M-PESA deposits reflect instantly in under 3 seconds! Let us know if you need anything else.",
+          "timestamp": "2026-09-28T08:48:52.698Z"
+        }
+      ]
+    }
+  ]
+}
