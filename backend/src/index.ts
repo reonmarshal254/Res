@@ -29,6 +29,15 @@ app.get('/admin', (req, res) => {
 });
 
 // Health Check & System Status
+app.get('/', (_req, res) => {
+  res.json({
+    success: true,
+    service: 'Resi API',
+    status: 'online',
+    health: '/api/health',
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
